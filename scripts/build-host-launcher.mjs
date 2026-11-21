@@ -12,7 +12,13 @@ const target = 'x86_64-pc-windows-msvc';
 const cargo = process.env.CARGO || 'cargo';
 // Scope static CRT linkage to this executable. A fresh Windows installation
 // must not need the separately installed Visual C++ redistributable to host Bots.
-const args = [...(process.platform === 'win32' ? [] : ['xwin']), 'rustc', '--manifest-path', path.join(root, 'client/src-tauri/Cargo.toml'), '-p', 'open-super-agent-host-launcher', '--target', target, '--release', '--locked', '--', '-C', 'target-feature=+crt-static'];
+// Keep the builder's checkout and registry paths out of the shipped binary:
+// rustc records them in panic locations even in a release build.
+const remap = [
+  `--remap-path-prefix=${root}=.`,
+  ...(process.env.CARGO_HOME ? [`--remap-path-prefix=${process.env.CARGO_HOME}=cargo`] : []),
+];
+const args = [...(process.platform === 'win32' ? [] : ['xwin']), 'rustc', '--manifest-path', path.join(root, 'client/src-tauri/Cargo.toml'), '-p', 'open-super-agent-host-launcher', '--target', target, '--release', '--locked', '--', '-C', 'target-feature=+crt-static', ...remap];
 const buildEnv = macosBuildEnvironment(root);
 execFileSync(cargo, args, { cwd: root, stdio: 'inherit', shell: false, env: buildEnv });
 const targetDirectory = buildEnv.CARGO_TARGET_DIR ? path.resolve(root, buildEnv.CARGO_TARGET_DIR) : path.join(root, 'client/src-tauri/target');

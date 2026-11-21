@@ -45,7 +45,16 @@ export function electronBuildPlan(options, env = process.env) {
   // #15: rustc's Apple strip can leave LC_SYMTAB's string table only 4-byte
   // aligned, which some macOS dyld versions refuse to load. Mac crates link
   // unstripped; their packaged copies are stripped with Apple's strip instead.
-  const cargoEnv = platform === 'darwin' ? { CARGO_PROFILE_RELEASE_STRIP: 'false' } : { CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: '-C target-feature=+crt-static' };
+  // Never ship the builder's checkout or registry paths: rustc embeds them in
+  // panic locations and debug metadata. The remap keeps one flag variable per
+  // platform so cargo's RUSTFLAGS precedence stays unchanged.
+  const remap = [
+    `--remap-path-prefix=${repository}=.`,
+    ...(env.CARGO_HOME ? [`--remap-path-prefix=${env.CARGO_HOME}=cargo`] : []),
+  ].join(' ');
+  const cargoEnv = platform === 'darwin'
+    ? { CARGO_PROFILE_RELEASE_STRIP: 'false', RUSTFLAGS: remap }
+    : { CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: `-C target-feature=+crt-static ${remap}` };
   return { platform, arch, target, production, unsignedProduction, updateConfig, updateProvider: updateConfig['github-updates'] ? 'github' : updateConfig.updater ? 'default' : 'none',
     cargoEnv, strip: platform === 'darwin' ? MAC_RUST_STRIP : null };
 }
