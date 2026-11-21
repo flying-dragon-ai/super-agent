@@ -1,0 +1,7 @@
+.pi-model-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+.pi-model-fields > label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pi-model-fields select { width: 100%; min-width: 0; max-width: 100%; }
+.new-bot-pair > .pi-model-fields { grid-column: 1 / -1; }
+.bot-setup .pi-model-fields > label { font-size: 13px; font-weight: 500; line-height: 1.4; color: var(--text); }
+.bot-setup .pi-model-fields select { font-weight: 400; }
+.pi-model-search { display: block; width: calc(100% - 12px); min-width: 0; margin: 6px; }

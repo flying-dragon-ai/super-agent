@@ -1,0 +1,206 @@
+import { existsSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { normalizeInstanceName } from "./instance.js";
+import type { AppConfig } from "./types.js";
+import { resolvePiExecutable } from "./runtime/pi-executable.js";
+import { resolveDeepSeekExecutable } from "./runtime/deepseek-executable.js";
+
+export interface EnvSource {
+  BRAVE_API_KEY?: string;
+  BRAVE_SEARCH_API_KEY?: string;
+  TAVILY_API_KEY?: string;
+  OPEN_SUPER_AGENT_STATE_DIR?: string;
+  OPEN_SUPER_AGENT_INSTANCE?: string;
+  OPEN_SUPER_AGENT_MAX_CONCURRENT_TURNS?: string;
+  HOME?: string;
+  APPDATA?: string;
+  LOCALAPPDATA?: string;
+  PATH?: string;
+  PATHEXT?: string;
+  USERPROFILE?: string;
+  CODEX_HOME?: string;
+  CLAUDE_CONFIG_DIR?: string;
+  TELEGRAM_BOT_TOKEN?: string;
+  CODEX_TELEGRAM_INSTANCE?: string;
+  CODEX_TELEGRAM_STATE_DIR?: string;
+  CCTB_LARK_ACTIVE_TURN?: string;
+  CCTB_LARK_ACTIVE_INSTANCE?: string;
+  CCTB_LARK_ACTIVE_STATE_DIR?: string;
+  CODEX_EXECUTABLE?: string;
+  CLAUDE_EXECUTABLE?: string;
+  DSH_EXECUTABLE?: string;
+  DSH_HOME?: string;
+  PI_EXECUTABLE?: string;
+  PI_CODING_AGENT_DIR?: string;
+  KIMI_EXECUTABLE?: string;
+  KIMI_CODE_HOME?: string;
+  ANTIGRAVITY_EXECUTABLE?: string;
+  CODEX_TELEGRAM_MAX_CONCURRENT_TURNS?: string;
+  OPEN_SUPER_AGENT_TURN_POOL_PATH?: string;
+  OPEN_SUPER_AGENT_TELEMETRY_MODULE?: string;
+  LARK_CHANNEL_TELEMETRY_MODULE?: string;
+}
+
+function resolveHomeDir(env: Pick<EnvSource, "HOME" | "USERPROFILE">): string | undefined {
+  if (process.platform === "win32") {
+    return env.USERPROFILE ?? env.HOME;
+  }
+
+  return env.HOME ?? env.USERPROFILE;
+}
+
+const isWindows = process.platform === "win32";
+
+function normalizeExecutablePath(value: string): string {
+  const trimmed = value.trim();
+
+  if (trimmed.length >= 2 && trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+    return trimmed.slice(1, -1);
+  }
+
+  return trimmed;
+}
+
+function resolveDefaultCodexExecutable(env: EnvSource): string {
+  if (env.CODEX_EXECUTABLE) {
+    return normalizeExecutablePath(env.CODEX_EXECUTABLE);
+  }
+
+  if (isWindows) {
+    const appData =
+      env.APPDATA ??
+      (env.USERPROFILE ? path.join(env.USERPROFILE, "AppData", "Roaming") : undefined);
+
+    if (appData) {
+      const windowsCodexCmd = path.join(appData, "npm", "codex.cmd");
+      if (existsSync(windowsCodexCmd)) {
+        return windowsCodexCmd;
+      }
+
+      const windowsCodexShim = path.join(appData, "npm", "codex.ps1");
+      if (existsSync(windowsCodexShim)) {
+        return windowsCodexShim;
+      }
+    }
+  }
+
+  return "codex";
+}
+
+function resolveDefaultAntigravityExecutable(env: EnvSource): string {
+  if (env.ANTIGRAVITY_EXECUTABLE) {
+    return normalizeExecutablePath(env.ANTIGRAVITY_EXECUTABLE);
+  }
+
+  if (isWindows) {
+    const appData =
+      env.APPDATA ??
+      (env.USERPROFILE ? path.join(env.USERPROFILE, "AppData", "Roaming") : undefined);
+
+    if (appData) {
+      const windowsAntigravityCmd = path.join(appData, "npm", "agy.cmd");
+      if (existsSync(windowsAntigravityCmd)) {
+        return windowsAntigravityCmd;
+      }
+
+      const windowsAntigravityShim = path.join(appData, "npm", "agy.ps1");
+      if (existsSync(windowsAntigravityShim)) {
+        return windowsAntigravityShim;
+      }
+    }
+  }
+
+  return "agy";
+}
+
+function resolveDefaultKimiExecutable(env: EnvSource): string {
+  if (env.KIMI_EXECUTABLE) {
+    return normalizeExecutablePath(env.KIMI_EXECUTABLE);
+  }
+
+  const homeDir = resolveHomeDir(env);
+  if (homeDir) {
+    const homeBinary = path.join(homeDir, ".kimi-code", "bin", isWindows ? "kimi.exe" : "kimi");
+    if (existsSync(homeBinary)) {
+      return homeBinary;
+    }
+  }
+
+  return "kimi";
+}
+
+function resolveDeepSeekHome(env: EnvSource): string {
+  if (env.DSH_HOME?.trim()) {
+    return normalizeExecutablePath(env.DSH_HOME);
+  }
+  const homeDir = resolveHomeDir(env) ?? os.homedir();
+  if (!homeDir) {
+    throw new Error(process.platform === "win32" ? "USERPROFILE or HOME is required" : "HOME or USERPROFILE is required");
+  }
+  return path.join(homeDir, ".dsh");
+}
+
+export function joinStatePath(base: string, segment: string): string {
+  return path.join(base, segment);
+}
+
+export function resolveInstanceStateDir(
+  env: Pick<EnvSource, "HOME" | "USERPROFILE" | "OPEN_SUPER_AGENT_STATE_DIR" | "OPEN_SUPER_AGENT_INSTANCE" | "CODEX_TELEGRAM_INSTANCE" | "CODEX_TELEGRAM_STATE_DIR"> = process.env,
+): string {
+  const instanceName = resolveInstanceName(env);
+
+  if (env.OPEN_SUPER_AGENT_STATE_DIR) return env.OPEN_SUPER_AGENT_STATE_DIR;
+  if (env.CODEX_TELEGRAM_STATE_DIR) {
+    return env.CODEX_TELEGRAM_STATE_DIR;
+  }
+
+  const homeDir = resolveHomeDir(env);
+  if (!homeDir) {
+    throw new Error(process.platform === "win32" ? "USERPROFILE or HOME is required" : "HOME or USERPROFILE is required");
+  }
+
+  return path.join(homeDir, ".cctb", instanceName);
+}
+
+export function resolveInstanceName(
+  env: Pick<EnvSource, "OPEN_SUPER_AGENT_INSTANCE" | "CODEX_TELEGRAM_INSTANCE">,
+  fallback = "default",
+): string {
+  return normalizeInstanceName(env.OPEN_SUPER_AGENT_INSTANCE ?? env.CODEX_TELEGRAM_INSTANCE ?? fallback);
+}
+
+export function resolveConfig(env: EnvSource = process.env): AppConfig {
+  const telegramBotToken = env.TELEGRAM_BOT_TOKEN;
+  if (!telegramBotToken) {
+    throw new Error("TELEGRAM_BOT_TOKEN is required");
+  }
+
+  return resolveBaseConfig(env, telegramBotToken);
+}
+
+export function resolveBridgeConfig(env: EnvSource = process.env): AppConfig {
+  return resolveBaseConfig(env, env.TELEGRAM_BOT_TOKEN ?? "");
+}
+
+function resolveBaseConfig(env: EnvSource, telegramBotToken: string): AppConfig {
+  const instanceName = resolveInstanceName(env);
+  const stateDir = resolveInstanceStateDir(env);
+
+  return {
+    instanceName,
+    telegramBotToken,
+    stateDir,
+    inboxDir: joinStatePath(stateDir, "inbox"),
+    accessStatePath: joinStatePath(stateDir, "access.json"),
+    sessionStatePath: joinStatePath(stateDir, "session.json"),
+    runtimeLogPath: joinStatePath(stateDir, "runtime.log"),
+    codexExecutable: resolveDefaultCodexExecutable(env),
+    deepseekExecutable: resolveDeepSeekExecutable(env),
+    deepseekHome: resolveDeepSeekHome(env),
+    kimiExecutable: resolveDefaultKimiExecutable(env),
+    piExecutable: resolvePiExecutable(env as NodeJS.ProcessEnv),
+    antigravityExecutable: resolveDefaultAntigravityExecutable(env),
+  };
+}

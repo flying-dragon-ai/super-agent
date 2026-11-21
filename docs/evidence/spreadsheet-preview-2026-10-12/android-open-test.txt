@@ -1,0 +1,5 @@
+com.opensuperagent.client.AttachmentOpenTest:.
+
+Time: 12.719
+
+OK (1 test)

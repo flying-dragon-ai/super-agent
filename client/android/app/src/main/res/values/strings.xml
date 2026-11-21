@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">open-super-agent</string>
+    <string name="title_activity_main">open-super-agent</string>
+    <string name="package_name">com.opensuperagent.client</string>
+    <string name="custom_url_scheme">com.opensuperagent.client</string>
+</resources>

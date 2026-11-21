@@ -1,0 +1,42 @@
+[package]
+name = "open-super-agent-desktop-native"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+publish = false
+[workspace]
+[lib]
+crate-type = ["cdylib", "rlib"]
+[features]
+default = ["addon"]
+addon = ["dep:napi", "dep:napi-derive"]
+[build-dependencies]
+napi-build = "=2.6.0"
+[dependencies]
+napi = { version = "=3.16.1", optional = true, default-features = false, features = ["napi8", "tokio_rt"] }
+napi-derive = { version = "=3.7.0", optional = true }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+uuid = { version = "1.29.2", features = ["v4"] }
+tokio = { version = "1.54.1", features = ["sync", "rt", "time", "macros"] }
+base64 = "0.23.1"
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "=0.6.5"
+block2 = "=0.6.2"
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "NSArray", "NSEnumerator", "NSBundle", "NSDictionary", "NSError", "NSObject", "NSString", "NSURL"] }
+objc2-user-notifications = { version = "=0.3.2", default-features = false, features = ["std", "block2", "UNNotification", "UNNotificationContent", "UNNotificationRequest", "UNNotificationResponse", "UNNotificationSettings", "UNNotificationSound", "UNNotificationTrigger", "UNUserNotificationCenter"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+dirs = "=7.0.0"
+# The exact login-item backend of tauri-plugin-autostart 2.7.0, so existing
+# `HKCU\...\Run\open-super-agent` entries written by this App stay controllable.
+auto-launch = "=0.6.0"
+# Native toast status, protocol activation, scoped history and shortcut identity.
+# Registry: read-only check of the notification profile key for diagnostics.
+windows = { version = "=0.62.2", features = ["Data_Xml_Dom", "Foundation_Metadata", "UI_Notifications", "Win32_System_WinRT", "Win32_System_Com_StructuredStorage", "Win32_System_Variant", "Win32_UI_Shell_PropertiesSystem", "Win32_Storage_EnhancedStorage", "Win32_Storage_FileSystem", "Win32_System_Registry", "Win32_Graphics_Gdi", "Win32_UI_WindowsAndMessaging", "Win32_UI_HiDpi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_LibraryLoader", "Win32_System_Threading"] }
+png = "=0.18.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

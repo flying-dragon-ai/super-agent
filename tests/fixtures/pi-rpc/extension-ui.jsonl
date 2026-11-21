@@ -1,0 +1,8 @@
+{"type":"extension_ui_request","id":"80ba93b1-c3c1-4919-a767-8d5970a9235b","method":"select","title":"Pick one","options":["A","B"]}
+{"type":"extension_ui_request","id":"53df99cd-c7a4-46ea-95d2-bb75a1a4800d","method":"confirm","title":"Sure?","message":"Really?"}
+{"type":"extension_ui_request","id":"62b434fb-0431-4b86-a8e2-a40d4c7114a8","method":"input","title":"Type","placeholder":"placeholder"}
+{"type":"extension_ui_request","id":"fc802801-083f-40b1-8dde-346335a81da1","method":"editor","title":"Edit","prefill":"prefill"}
+{"type":"extension_ui_request","id":"6ccacb0b-e6b8-4d67-98d4-dd558423018b","method":"notify","message":"done","notifyType":"info"}
+{"type":"extension_ui_request","id":"460e3a65-ba5e-4ab2-be18-c2bca2f1fb43","method":"setStatus","statusKey":"lab","statusText":"status text"}
+{"type":"extension_ui_request","id":"8e76a843-aa97-46eb-a25e-67584de2151e","method":"setWidget","widgetKey":"lab","widgetLines":["w1","w2"]}
+{"id":"p04b-10","type":"response","command":"prompt","success":true,"data":{"disposition":"handled"}}

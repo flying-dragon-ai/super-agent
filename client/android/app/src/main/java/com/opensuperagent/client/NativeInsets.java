@@ -1,0 +1,121 @@
+package com.opensuperagent.client;
+
+import android.app.Activity;
+import android.view.View;
+import android.webkit.WebView;
+import androidx.activity.ComponentActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.WebViewListener;
+import java.util.WeakHashMap;
+
+/** Keep the whole WebView inside the OS safe rectangle, including its dialogs.
+ * This does not depend on a WebView version or JavaScript injection timing.
+ * The soft keyboard is reported to the page instead (see viewport.ts). */
+final class NativeInsets {
+    // An immersive reader keeps the whole screen until close. Its overlay
+    // controls receive separate safe insets, without resizing the photo.
+    private static boolean immersive;
+    // UI-thread only. Keep the latest system rectangle per window without
+    // retaining destroyed Activities. Window background changes can reset
+    // DecorView padding without delivering another set of insets.
+    private static final WeakHashMap<View, Insets> systemInsets = new WeakHashMap<>();
+
+    private NativeInsets() {}
+
+    static void install(ComponentActivity activity) {
+        // The saved canvas enables edge-to-edge layout on every Android version.
+        // This listener then stays the only owner of the insets.
+        NativeAppearance.restore(activity);
+        var decor = activity.getWindow().getDecorView();
+        var bridge = activity instanceof BridgeActivity ? ((BridgeActivity) activity).getBridge() : null;
+        var keyboard = new long[] { 0, 0 };
+        var readerInsets = new int[] { 0, 0, 0, 0 };
+        // A reloaded page starts without the last report: give it the current
+        // state. Its old dispatch time makes the page apply it without motion.
+        if (bridge != null) bridge.addWebViewListener(new WebViewListener() {
+            @Override public void onPageStarted(WebView webView) {
+                // Register after Bridge construction: its builder replaces the
+                // listeners added during Plugin.load(). A new document owns no
+                // reader lease, so release the old native immersive state.
+                NativeAppearance.resetReader(activity);
+            }
+            @Override public void onPageLoaded(WebView webView) {
+                publishKeyboard(activity, webView, (int) keyboard[0], keyboard[1]);
+                publishReaderInsets(activity, webView, readerInsets);
+            }
+        });
+        ViewCompat.setOnApplyWindowInsetsListener(decor, (view, insets) -> {
+            var system = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            systemInsets.put(view, system);
+            var safe = immersive ? Insets.NONE : system;
+            // Ignoring visibility keeps overlay controls clear of cutouts and
+            // transient system bars even after immersive mode hides the bars.
+            var readerSafe = immersive ? insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()) : Insets.NONE;
+            if (readerInsets[0] != readerSafe.top || readerInsets[1] != readerSafe.right || readerInsets[2] != readerSafe.bottom || readerInsets[3] != readerSafe.left) {
+                readerInsets[0] = readerSafe.top; readerInsets[1] = readerSafe.right; readerInsets[2] = readerSafe.bottom; readerInsets[3] = readerSafe.left;
+                publishReaderInsets(activity, bridge == null ? null : bridge.getWebView(), readerInsets);
+            }
+            var ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            // The IME overlays the WebView. During an IME animation this listener
+            // receives the animation's end state, so padding for it here resized
+            // the WebView before the keyboard moved. The page animates instead.
+            view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+            var overlap = Math.max(0, ime.bottom - safe.bottom);
+            if (overlap != keyboard[0]) {
+                keyboard[0] = overlap; keyboard[1] = System.currentTimeMillis();
+                publishKeyboard(activity, bridge == null ? null : bridge.getWebView(), overlap, keyboard[1]);
+            }
+            // Native padding already reserves these areas. Pass zero to WebView
+            // so its env() values cannot reserve the system bars a second time,
+            // nor a WebView handle the IME again. Capacitor Keyboard reads its
+            // visibility from the root insets, not from these.
+            return new WindowInsetsCompat.Builder(insets)
+                .setInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout(), Insets.NONE)
+                .setInsets(WindowInsetsCompat.Type.ime(), Insets.NONE)
+                .build();
+        });
+        ViewCompat.requestApplyInsets(decor);
+    }
+
+    /** Reassert native layout before a background/contrast refresh can paint.
+     * A WebView resize may eventually repair it, but that allows unsafe frames
+     * first and is not guaranteed across WebView versions or system keyboards. */
+    static void restorePadding(Activity activity) {
+        var decor = activity.getWindow().getDecorView();
+        var system = systemInsets.get(decor);
+        if (system == null) return; // First attachment still awaits its OS report.
+        var safe = immersive ? Insets.NONE : system;
+        decor.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+    }
+
+    /** Viewer-only CSS padding; never applies to the chat or shrinks the canvas. */
+    private static void publishReaderInsets(Activity activity, WebView webView, int[] insets) {
+        if (webView == null) return;
+        var density = activity.getResources().getDisplayMetrics().density;
+        webView.evaluateJavascript("(()=>{const s=document.documentElement.style;"
+            + "s.setProperty('--image-safe-top','" + insets[0] / density + "px');"
+            + "s.setProperty('--image-safe-right','" + insets[1] / density + "px');"
+            + "s.setProperty('--image-safe-bottom','" + insets[2] / density + "px');"
+            + "s.setProperty('--image-safe-left','" + insets[3] / density + "px');})()", null);
+    }
+
+    /** Sends the IME's end-state overlap of the WebView (CSS px) with its
+     * dispatch time, so the page can start its transition with the IME. The
+     * page keeps the latest report for a controller installed after it. */
+    private static void publishKeyboard(Activity activity, WebView webView, int overlap, long at) {
+        if (webView == null) return;
+        var height = overlap / activity.getResources().getDisplayMetrics().density;
+        webView.evaluateJavascript("window.__openSuperAgentKeyboard={height:" + height + ",at:" + at + "};window.dispatchEvent(new CustomEvent('open-super-agent-keyboard',{detail:window.__openSuperAgentKeyboard}))", null);
+    }
+
+    /** Reselect zero or safe padding. The edge-to-edge window already extends
+     * into a display cutout, so the reader needs no cutout mode of its own. */
+    static void setImmersive(Activity activity, boolean value) {
+        if (immersive == value) return;
+        immersive = value;
+        ViewCompat.requestApplyInsets(activity.getWindow().getDecorView());
+    }
+}

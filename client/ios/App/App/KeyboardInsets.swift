@@ -1,0 +1,174 @@
+import Foundation
+import CoreGraphics
+
+/// All rectangles are in the WebView's own coordinates. The keyboard guide's
+/// resting frame includes the home indicator; it is not keyboard occlusion.
+enum KeyboardInsetGeometry {
+    /// Keep the pre-existing keyboard policy on ordinary/cover iPhones and
+    /// iPads. Use scene bounds so folding and Split View withdraw the override.
+    static func tracksExpandedPhone(isPhone: Bool, bounds: CGRect) -> Bool {
+        isPhone && bounds.width.isFinite && bounds.height.isFinite
+            && min(bounds.width, bounds.height) >= 600
+    }
+
+    static func isBackEdge(_ x: CGFloat, safeLeft: CGFloat) -> Bool {
+        x.isFinite && safeLeft.isFinite && x >= safeLeft && x <= safeLeft + 24
+    }
+
+    static func overlap(bounds: CGRect, guide: CGRect, restingBottom: CGFloat) -> CGFloat {
+        guard !bounds.isEmpty, !guide.isNull, !guide.isInfinite,
+              restingBottom.isFinite, guide.minY < restingBottom - 0.5 else { return 0 }
+        let covered = bounds.intersection(guide)
+        guard !covered.isNull, !covered.isEmpty,
+              covered.maxY >= bounds.maxY - 0.5,
+              covered.minX <= bounds.minX + 0.5,
+              covered.maxX >= bounds.maxX - 0.5 else { return 0 }
+        return min(bounds.height, max(0, bounds.maxY - covered.minY))
+    }
+}
+
+/// Only the first changed guide frame borrows the keyboard animation. Later
+/// layout corrections and display/scene resizes must not restart it.
+struct KeyboardInsetMotion {
+    private var start: Double?
+    private var duration: Double = 0
+
+    mutating func begin(at: Double, duration: Double) {
+        start = at.isFinite ? at : nil
+        self.duration = duration.isFinite ? min(1_000, max(0, duration)) : 0
+    }
+
+    mutating func consume(at now: Double, animate: Bool) -> (at: Double, duration: Double) {
+        defer { start = nil; duration = 0 }
+        guard animate, let start, now >= start, now - start < duration else { return (now, 0) }
+        return (start, duration)
+    }
+}
+
+#if canImport(UIKit)
+import UIKit
+import WebKit
+
+private final class KeyboardInsetProbe: UIView {
+    var changed: (() -> Void)?
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        changed?()
+    }
+}
+
+/// App-owned keyboard geometry, independent of the Capacitor plugin's
+/// single-screen/iPad heuristics. It leaves the native WebView edge-to-edge;
+/// the existing CSS shell owns keyboard avoidance and motion.
+final class OpenSuperAgentKeyboardInsets: NSObject, WKScriptMessageHandler {
+    private weak var view: UIView?
+    private weak var webView: WKWebView?
+    private var observer: NSObjectProtocol?
+    private var lastHeight: CGFloat?
+    private var lastBounds: CGRect?
+    private var motion = KeyboardInsetMotion()
+    private var ready = false
+    private var layoutPending = false
+    private static let readyMessage = "openSuperAgentKeyboardReady"
+    private static let accessoryMessage = "openSuperAgentKeyboardAccessoryRefresh"
+
+    init(view: UIView, webView: WKWebView) {
+        self.view = view
+        self.webView = webView
+        super.init()
+
+        let controller = webView.configuration.userContentController
+        controller.add(self, name: Self.readyMessage)
+        controller.add(self, name: Self.accessoryMessage)
+        controller.addUserScript(WKUserScript(source: """
+            Object.defineProperty(window,'openSuperAgentKeyboardInsets',{value:Object.freeze({supported:()=>true,refreshAccessory:()=>window.webkit.messageHandlers.openSuperAgentKeyboardAccessoryRefresh.postMessage(null)}),configurable:false,writable:false});
+            window.webkit.messageHandlers.openSuperAgentKeyboardReady.postMessage(null);
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+
+        // Only expanded phone windows need the undocked-guide workaround.
+        // overlap() still excludes floating/partial-width keyboard occlusion.
+        let guide = view.keyboardLayoutGuide
+        updateKeyboardGuide()
+        let probe = KeyboardInsetProbe()
+        probe.translatesAutoresizingMaskIntoConstraints = false
+        probe.isUserInteractionEnabled = false
+        probe.accessibilityElementsHidden = true
+        probe.alpha = 0
+        probe.changed = { [weak self] in self?.layoutChanged() }
+        view.addSubview(probe)
+        NSLayoutConstraint.activate([
+            probe.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            probe.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            probe.topAnchor.constraint(equalTo: guide.topAnchor),
+            probe.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+        observer = NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main) { [weak self] notification in
+            // Timing only: never read the notification's screen-sized frame.
+            let duration = (notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0
+            self?.motion.begin(at: Date().timeIntervalSince1970 * 1_000, duration: duration * 1_000)
+        }
+    }
+
+    deinit { if let observer { NotificationCenter.default.removeObserver(observer) } }
+
+    private func updateKeyboardGuide() {
+        guard let view, let webView else { return }
+        let follows = KeyboardInsetGeometry.tracksExpandedPhone(
+            isPhone: view.traitCollection.userInterfaceIdiom == .phone, bounds: webView.bounds)
+        if view.keyboardLayoutGuide.followsUndockedKeyboard != follows {
+            view.keyboardLayoutGuide.followsUndockedKeyboard = follows
+        }
+    }
+
+    func layoutChanged() {
+        updateKeyboardGuide()
+        guard !layoutPending else { return }
+        layoutPending = true
+        // UIKit can lay out the guide immediately before delivering the
+        // keyboard notification. Coalesce this run-loop turn so its duration
+        // is available for the first frame instead of publishing a jump.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.layoutPending = false
+            self.publish(force: false)
+        }
+    }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.frameInfo.isMainFrame, message.webView === webView else { return }
+        if message.name == Self.accessoryMessage {
+            guard let webView, view?.traitCollection.userInterfaceIdiom == .phone else { return }
+            // UIKit caches the current responder's accessory view. The public
+            // reload API updates it in place without resigning the responder
+            // or writing to the field.
+            func refresh(_ node: UIView) -> Bool {
+                if node.isFirstResponder { node.reloadInputViews(); return true }
+                for child in node.subviews { if refresh(child) { return true } }
+                return false
+            }
+            _ = refresh(webView)
+            return
+        }
+        guard message.name == Self.readyMessage else { return }
+        ready = true
+        // Navigation creates a fresh JS world. A still-open keyboard needs a
+        // fresh snapshot even though its native geometry has not changed.
+        publish(force: true)
+    }
+
+    private func publish(force: Bool) {
+        guard ready, let view, let webView, webView.window != nil else { return }
+        let bounds = webView.bounds
+        let guide = webView.convert(view.keyboardLayoutGuide.layoutFrame, from: view)
+        let restingBottom = webView.convert(view.safeAreaLayoutGuide.layoutFrame, from: view).maxY
+        let height = KeyboardInsetGeometry.overlap(bounds: bounds, guide: guide, restingBottom: restingBottom)
+        let resized = lastBounds != nil && lastBounds != bounds
+        lastBounds = bounds
+        guard force || lastHeight != height else { return }
+        lastHeight = height
+        let timing = motion.consume(at: Date().timeIntervalSince1970 * 1_000, animate: !force && !resized)
+        let data = "{height:\(height),at:\(timing.at),duration:\(timing.duration)}"
+        webView.evaluateJavaScript("window.__openSuperAgentKeyboard=\(data);window.dispatchEvent(new CustomEvent('open-super-agent-keyboard',{detail:window.__openSuperAgentKeyboard}));", completionHandler: nil)
+    }
+}
+#endif

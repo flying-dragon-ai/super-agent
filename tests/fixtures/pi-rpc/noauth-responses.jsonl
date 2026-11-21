@@ -1,0 +1,43 @@
+{"id":"p01-1","type":"response","command":"get_state","success":true,"data":{"model":{"id":"unknown","name":"unknown","api":"unknown","provider":"unknown","baseUrl":"","reasoning":false,"input":[],"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0},"contextWindow":0,"maxTokens":0},"thinkingLevel":"off","isStreaming":false,"isCompacting":false,"steeringMode":"one-at-a-time","followUpMode":"one-at-a-time","sessionId":"01a1f81c-b3b0-74f1-be2e-8ef9e4aeb65c","autoCompactionEnabled":true,"messageCount":0,"pendingMessageCount":0}}
+{"id":"p01-2","type":"response","command":"get_available_models","success":true,"data":{"models":[]}}
+{"id":"p01-3","type":"response","command":"get_available_thinking_levels","success":true,"data":{"levels":["off"]}}
+{"id":"p01-4","type":"response","command":"get_commands","success":true,"data":{"commands":[{"name":"llama","description":"Manage llama.cpp router models","source":"extension","sourceInfo":{"path":"builtin:llama.cpp","source":"builtin","scope":"temporary","origin":"top-level"}},{"name":"mcp","description":"Manage MCP servers: sign in, reconnect, enable or disable, and change exposure","source":"extension","sourceInfo":{"path":"builtin:mcp","source":"builtin","scope":"temporary","origin":"top-level"}}]}}
+{"id":"p01-5","type":"response","command":"get_session_stats","success":true,"data":{"sessionId":"01a1f81c-b3b0-74f1-be2e-8ef9e4aeb65c","userMessages":0,"assistantMessages":0,"toolCalls":0,"toolResults":0,"totalMessages":0,"tokens":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0},"cost":0}}
+{"id":"p01-6","type":"response","command":"get_entries","success":true,"data":{"entries":[{"type":"thinking_level_change","id":"84f4f2fc","parentId":null,"timestamp":"2026-11-20T08:39:53.043Z","thinkingLevel":"off"}],"leafId":"84f4f2fc"}}
+{"id":"p01-7","type":"response","command":"get_tree","success":true,"data":{"tree":[{"entry":{"type":"thinking_level_change","id":"84f4f2fc","parentId":null,"timestamp":"2026-11-20T08:39:53.043Z","thinkingLevel":"off"},"children":[]}],"leafId":"84f4f2fc"}}
+{"id":"p01-8","type":"response","command":"get_messages","success":true,"data":{"messages":[]}}
+{"id":"p01-9","type":"response","command":"get_fork_messages","success":true,"data":{"messages":[]}}
+{"id":"p01-10","type":"response","command":"get_last_assistant_text","success":true,"data":{}}
+{"id":"p01-11","type":"response","command":"set_model","success":false,"error":"Model not found: nope/nope"}
+{"id":"p01-12","type":"response","command":"set_model","success":false,"error":"Model not found: anthropic/claude-sonnet-4-5"}
+{"id":"p01-13","type":"response","command":"cycle_model","success":true,"data":null}
+{"id":"p01-14","type":"response","command":"set_thinking_level","success":true}
+{"id":"p01-15","type":"response","command":"set_thinking_level","success":true}
+{"id":"p01-16","type":"response","command":"cycle_thinking_level","success":true,"data":null}
+{"id":"p01-17","type":"response","command":"prompt","success":false,"error":"No API key found for the selected model.\n\nUse /login to log into a provider via OAuth or API key. See:\n  /synthetic/lab/node_modules/@earendil-works/pi-coding-agent/docs/providers.md\n  /synthetic/lab/node_modules/@earendil-works/pi-coding-agent/docs/models.md"}
+{"type":"queue_update","steering":["steer while idle"],"followUp":[]}
+{"id":"p01-18","type":"response","command":"steer","success":true,"data":{"disposition":"queued"}}
+{"type":"queue_update","steering":["steer while idle"],"followUp":["follow while idle"]}
+{"id":"p01-19","type":"response","command":"follow_up","success":true,"data":{"disposition":"queued"}}
+{"id":"p01-20","type":"response","command":"get_state","success":true,"data":{"model":{"id":"unknown","name":"unknown","api":"unknown","provider":"unknown","baseUrl":"","reasoning":false,"input":[],"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0},"contextWindow":0,"maxTokens":0},"thinkingLevel":"off","isStreaming":false,"isCompacting":false,"steeringMode":"one-at-a-time","followUpMode":"one-at-a-time","sessionId":"01a1f81c-b3b0-74f1-be2e-8ef9e4aeb65c","autoCompactionEnabled":true,"messageCount":0,"pendingMessageCount":2}}
+{"type":"queue_update","steering":[],"followUp":[]}
+{"id":"p01-21","type":"response","command":"clear_queue","success":true,"data":{"steering":["steer while idle"],"followUp":["follow while idle"]}}
+{"id":"p01-22","type":"response","command":"abort","success":true}
+{"id":"p01-23","type":"response","command":"definitely_not_a_command","success":false,"error":"Unknown command: definitely_not_a_command"}
+{"type":"response","command":"parse","success":false,"error":"Failed to parse command: Expected property name or '}' in JSON at position 1 (line 1 column 2)"}
+{"type":"bash_execution_update","id":"p01-24","delta":"hi\n"}
+{"type":"bash_execution_update","id":"p01-24","delta":"err\n"}
+{"id":"p01-24","type":"response","command":"bash","success":true,"data":{"output":"hi\nerr\n","exitCode":3,"cancelled":false,"truncated":false}}
+{"id":"p01-25","type":"response","command":"set_session_name","success":false,"error":"Session name cannot be empty"}
+{"type":"session_info_changed","name":"probe name"}
+{"id":"p01-26","type":"response","command":"set_session_name","success":true}
+{"type":"compaction_start","reason":"manual"}
+{"type":"compaction_end","reason":"manual","aborted":false,"willRetry":false,"errorMessage":"Compaction failed: Nothing to compact (session too small)"}
+{"id":"p01-27","type":"response","command":"compact","success":false,"error":"Nothing to compact (session too small)"}
+{"id":"p01-28","type":"response","command":"export_html","success":false,"error":"Cannot export in-memory session to HTML"}
+{"id":"p01-29","type":"response","command":"new_session","success":true,"data":{"cancelled":false}}
+{"id":"p01-30","type":"response","command":"switch_session","success":true,"data":{"cancelled":false}}
+{"id":"p01-31","type":"response","command":"fork","success":false,"error":"Invalid entry ID for forking"}
+{"id":"p01-32","type":"response","command":"clone","success":false,"error":"This session has not been saved yet. Send a message before cloning or forking it."}
+{"id":"p01-33","type":"response","command":"get_entries","success":false,"error":"Entry not found: nope"}
+{"id":"p01-34","type":"response","command":"get_state","success":true,"data":{"model":{"id":"unknown","name":"unknown","api":"unknown","provider":"unknown","baseUrl":"","reasoning":false,"input":[],"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0},"contextWindow":0,"maxTokens":0},"thinkingLevel":"off","isStreaming":false,"isCompacting":false,"steeringMode":"one-at-a-time","followUpMode":"one-at-a-time","sessionFile":"/synthetic/lab/out/missing.jsonl","sessionId":"01a1f81c-b3eb-74f1-be2e-8efd629d6792","autoCompactionEnabled":true,"messageCount":0,"pendingMessageCount":0}}
