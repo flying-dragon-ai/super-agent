@@ -1,0 +1,64 @@
+name: Unsigned macOS desktop build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+jobs:
+  macos:
+    # Owner-directed preview build: the product identity, version and artifact
+    # names match a release, but the App is not signed with a Developer ID and
+    # is not notarized, and it ships no signed update manifest. It is not a
+    # release and must not be published as one.
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      OPEN_SUPER_AGENT_SOURCE_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Configure desktop build directories
+        shell: bash
+        run: |
+          printf '%s\n' \
+            "OPEN_SUPER_AGENT_DESKTOP_OUTPUT=$RUNNER_TEMP/open-super-agent-electron-output.noindex" \
+            "OPEN_SUPER_AGENT_ELECTRON_CACHE=$RUNNER_TEMP/open-super-agent-electron-cache.noindex" \
+            "OPEN_SUPER_AGENT_DESKTOP_TARGET=$RUNNER_TEMP/open-super-agent-electron-target.noindex" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
+      - name: Read application version
+        id: version
+        run: |
+          test "$(uname -m)" = arm64
+          node --input-type=module -e 'import fs from "node:fs"; const a=JSON.parse(fs.readFileSync("client/package.json")), b=JSON.parse(fs.readFileSync("client/src-tauri/tauri.conf.json")); if(a.version!==b.version) throw Error("App versions differ"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${a.version}\n`);'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: client/src-tauri -> target
+      - uses: ./.github/actions/setup-host-cross
+      - run: npm ci
+      - run: npm ci --prefix client
+      - name: Build unsigned macOS App and DMG
+        run: npm run desktop:macos --prefix client -- --unsigned-production
+      - name: Record the unsigned build receipt
+        shell: bash
+        run: |
+          cat "$OPEN_SUPER_AGENT_DESKTOP_OUTPUT/desktop-build.json"
+      # Upload before the acceptance steps so a later regression cannot discard
+      # an already-built image.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: open-super-agent-macos-arm64-unsigned
+          path: |
+            ${{ runner.temp }}/open-super-agent-electron-output.noindex/artifacts.noindex/*.dmg
+            ${{ runner.temp }}/open-super-agent-electron-output.noindex/artifacts.noindex/*.app.tar.gz
+          if-no-files-found: error
+      - name: Packaged host acceptance
+        run: client/src-tauri/host/node scripts/verify-desktop-host.mjs client/src-tauri/host

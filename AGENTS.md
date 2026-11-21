@@ -1,0 +1,372 @@
+# Agent Entry
+
+The product is **open-super-agent** (`open-super-agent`). Read
+[repository privacy](docs/repository-privacy.md) and
+[versioning](docs/versioning.md) before any commit, PR, push or release.
+
+## Canonical repository and releases
+
+The active repository is **flying-dragon-ai/super-agent**, initially private. The former
+`cloveric/tarobot` repository is a private historical archive. All new development
+and future releases belong here. Never merge or mirror old history, PR refs,
+tags, Actions records or release assets into this repository. Port a reviewed
+source patch when an old change is needed.
+
+The migration publishes no Release and installs no App. Releases stay empty
+until the owner explicitly requests publication. The first release here contains
+only the then-current version; do not import the old release catalog. Write all
+future GitHub Release titles and notes in **English**. Continue semantic
+versioning; migration does not reset the product version. Corrected same-version
+package replacements follow the verification, counter and disclosure rules in
+[versioning](docs/versioning.md).
+
+Before the first new release, build with `OPEN_SUPER_AGENT_GITHUB_REPOSITORY=flying-dragon-ai/super-agent`
+and verify updater OAuth access and downloaded signatures for this repository.
+Existing binaries still use the historical update endpoint. Preserve their old
+downloads and verify a one-time upgrade path without changing App identities,
+signing keys, saved Host data or credentials. See
+[repository migration](docs/repository-migration.md).
+
+## Owner acceptance before stable publication
+
+From 2026-11-20, the default release path is **owner trial → RC → stable**.
+A general release request authorizes candidate preparation and RC publication,
+not stable publication; a preparation-only request remains preparation-only.
+First deliver verified packages for the owner's use or retain a GitHub draft.
+Install/activate on a device only when authorized. Public RC publication falls
+within that release request; use `prerelease: true` on both the canonical page
+and every platform compatibility release. RC downloads
+are public in a public repository and must not become the stable latest release
+or enter stable updater discovery. Keep iOS in TestFlight and Play in a test
+track until the owner's stable approval includes their production rollout.
+
+After the owner has used the candidate, obtain an explicit instruction to turn
+that identified build into a stable release. Prefer promoting the exact verified
+bytes; changed bytes need new checks, receipts and applicable build counters.
+Do not infer approval from passing tests, elapsed time or an older Windows
+direct-release exception. Scope validation to the change; this staging policy
+does not require an unrelated full audit for every patch, and does not waive
+privacy, signatures or affected-runtime checks. See the
+[candidate and promotion procedure](docs/release-checklist.md#candidate-and-stable-publication).
+
+## Official homepage and release updates
+
+The official homepage is <https://cloveric.github.io/super_agent-site/>; its source
+repository is **flying-dragon-ai/super-agent-site**. For every owner-authorized stable release,
+update and deploy the homepage to reflect the published version, platform
+downloads, release link and affected feature descriptions or screenshots. Keep
+the existing page structure and keep its Chinese and English content aligned.
+
+During candidate testing, keep the homepage's primary version and download
+links on the current stable release. A separately requested preview link must
+be labelled as such; a draft or RC does not replace the stable homepage entry.
+
+Use each platform's actual availability: retain working downloads for platforms
+still pending, and do not describe an uploaded iOS build as available in
+TestFlight before it is released to the intended testers. Ready platforms may
+still publish independently; update the homepage again as the others become
+available.
+
+Read the site repository's instructions before editing it, and apply the upload
+privacy gate to its outgoing changes and media. After deployment, read back the
+live page and verify the displayed versions and download destinations. Include
+the site commit/deployment and read-back result in release evidence; explicitly
+report any unfinished homepage update. This website requirement is separate
+from the GitHub README policy of linking to stable Releases instead of adding
+per-version download tables.
+
+## Android distribution channels
+
+For future Android releases, prepare both the GitHub APK and Google Play AAB
+from the same source revision, product version and `androidVersionCode` in
+`release-version.json`. Keep the code greater than every previously accepted
+upload in either channel, including drafts. Do not advance it separately for the
+second channel. Record exceptional rebuilds and their consumed counters.
+
+Build with an explicit `openSuperAgentDistribution=github` or `play` in separate output
+staging directories, and verify the final artifact's channel policy. Play must
+have no `REQUEST_INSTALL_PACKAGES`, GitHub updater or APK installation actions;
+ordinary attachment save/share and opening non-APK files must remain available.
+The GitHub build retains its existing updater and installer behavior. Signing
+material and console identities stay outside Git. Verify the Play app-signing
+certificate, not just the upload certificate, before claiming cross-channel
+upgrade compatibility. Follow [Android build instructions](docs/client/android-build.md)
+and the [release checklist](docs/release-checklist.md#android-distribution-checks).
+Preparing or handing off an AAB is not evidence of store publication.
+
+For the next Android release, carry forward the recorded
+[Play Console optimization and system-bar follow-ups](docs/release-checklist.md#next-android-release-play-console-follow-ups-2026-11-17).
+Resolve or explicitly report their status during preflight; a successful upload
+does not establish that these warnings have been resolved.
+
+## Mandatory GitHub upload gate
+
+Every push to `main` **and every PR branch/update**, including merges and
+documentation-only changes, must pass a fresh privacy scan of the exact outgoing
+commits. Do this **before upload**; GitHub Actions is a second check, not permission
+to upload first. No `--no-verify`, disabled hooks, broad allowlists or skipped
+checks to make a push work. A missing tool, incomplete/shallow history, failed
+scan or unavailable evidence blocks that upload.
+
+- Configure this checkout's GitHub noreply identity and run `npm run privacy:setup`.
+  Verify with `node scripts/setup-privacy-hooks.mjs --check`; cloning does not
+  copy hook settings. Preserve and review existing hooks before changing them.
+- Run `npm run privacy:staged` before committing. The pre-push hook scans the
+  actual outgoing range, author/committer and tag identities, intermediate
+  blobs, personal paths/hostnames/emails/IPs, media review records, full-history
+  Gitleaks and retired ancestry. Run `npm run version:check` as well.
+- Review **PR/issue titles, bodies, comments, commit messages, screenshots,
+  recordings, logs, attachments, Actions artifacts and release assets** before
+  uploading. They are not all Git files. Scan publication text with
+  `check-upload-privacy.mjs text` and Gitleaks; CI also scans PR title/body.
+  Never paste raw scanner output or private evidence into GitHub.
+- Screenshots require visual inspection (and OCR where practical); remove real
+  device/account names, chats, addresses, tokens, QR pairing data and home paths.
+  Record only the reviewed file path, SHA-256, reviewer and review method in
+  `.privacy-reviewed-media.json`. A byte change requires new review. This record
+  is evidence of review, not an automatic privacy detector or directory waiver.
+- Unpack release installers/archives and inspect their contents, metadata and
+  binary strings, including UTF-16 and compiled Rust source paths. Use build
+  path remapping; do not ship developer home directories. Recheck the exact
+  signed/uploaded bytes. A clean source scan does not certify a binary.
+- Use synthetic examples and public noreply identities. Keep owner reports,
+  raw mirrors, service configs, credentials, signing material and private scan
+  output outside Git. Never copy the private audit report into this repository.
+- Record exact source SHA, scan range, tool version, result and evidence boundary.
+  CI blocked by billing is **not run**, not pass. Run local gates before an
+  authorized push; report the remote blocker. Do not change billing/visibility.
+
+The November 2026 audit of the former repository found screenshot,
+commit-metadata, old PR/ref, Actions and binary-path residue. New gates and this
+authorized fresh-snapshot migration do **not** erase that archived content. Do
+not claim complete historical cleanup, close that work or rewrite history beyond
+the separate approved remediation scope.
+
+Before modifying this repository, read [docs/entrypoint-map.md](docs/entrypoint-map.md).
+
+That file is the source of truth for:
+- App/Gateway and headless CLI entry flows
+- retired transport boundaries and current App compatibility readers
+- bus flow
+- state/config ownership
+- shared usage/budget/audit logic
+- required regression tests by change area
+
+If you change behavior rather than comments/docs, prefer focused tests first, then `npm run build`.
+
+## Storage on the owner's Mac
+
+Use the mounted `/Volumes/gdrive` disk for project checkouts, release installers,
+build caches and temporary verification artifacts. Put checkouts in `projects`,
+caches in `dev-cache`, and release/test output in `taro-tmp.noindex`. Every
+temporary `.app` (including rollback/acceptance copies and extracted archives)
+must live below a physical `.noindex` directory. Use a `.noindex`
+`CARGO_TARGET_DIR`, such as `dev-cache/open-super-agent-release-target.noindex`, and the
+Electron `.noindex` output/cache/target roots exported by the artifact workspace.
+Follow [artifact retention](docs/macos-artifact-retention.md) and the
+[release artifact skill](skills/open-super-agent-release-artifacts/SKILL.md). Preserve the
+installed App and active/recent task directories; retire eligible old Apps only
+with the guarded `/usr/bin/trash` helper after publication. Check mount access
+before a large build; do not silently fall back to large directories on the
+internal disk. Keep installed applications and active host state in their
+supported locations. A small local installation staging directory is acceptable
+when required for an atomic App replacement; retire it after verified installation.
+When relocating existing task files, preserve uncommitted work, check active
+processes, verify copied bytes and links, and retain path compatibility where needed.
+
+## Desktop, mobile and CLI evolve together
+
+Open Super Agent's headless CLI is a first-class entry point to the same host core as the
+desktop and mobile Apps. For every feature or behavior change, assess the CLI
+impact before implementation. Host capabilities (Bots, conversations, files,
+collaboration, scheduled work, permissions, pairing, network membership and
+operations) must remain usable without launching the desktop App. Add or update
+the relevant CLI command, help and documentation when the capability needs a
+command-line entry point; do not create a separate, reduced host implementation.
+Pure presentation changes may be CLI-not-applicable, but state that reason in
+the change/release notes rather than silently omitting the CLI.
+
+Use shared APIs and business rules. Preserve the same canonical host identity,
+state, permission checks and private-network semantics across entry points;
+hosts retain their Bots, and phones retain independent membership. Cover Codex,
+Claude, Antigravity, Kimi and DeepSeek according to each adapter's capabilities.
+
+For a host-affecting release, build, test and publish the corresponding standalone
+CLI package from the same source revision as the App's bundled host. Record the
+App version, host/CLI version, supported protocol/schema range and artifact
+checksums. Verify both a clean CLI installation and an existing-host upgrade;
+source changes or App installers alone do not update the published CLI package.
+If one artifact or platform is blocked, report it explicitly. Follow
+[the release checklist](docs/release-checklist.md) and
+[the CLI architecture map](docs/entrypoint-map.md#headless-host-cli).
+
+GitHub checkpoint rule: after each coherent requested change is implemented and
+validated, commit the intended project changes directly on `main`, or merge a
+completed working branch into local `main`, then push `main` before reporting
+completion. Do not create pull requests unless the user explicitly asks for one.
+Integrate dependent changes in order, preserve unrelated uncommitted work, and
+sync with remote `main` without force-pushing. Verify that remote `main` contains
+the intended commits and report the commit link; do not leave completed work
+only locally or on a development branch. Investigate failing checks and report
+unresolved verification or infrastructure blockers accurately; never claim
+checks passed when they did not run. Documentation-only workflow changes do not
+require a new App release.
+
+Release rule: publish or update an installed App only when the owner explicitly
+requests a release/update. Routine fixes, audits, commits and pushes do not imply
+release authorization. If the owner says to wait for a new release request, hold
+any previously prepared publication/installation and preserve its receipts.
+Follow `docs/release-checklist.md`. The retired Telegram/Lark adapters are not part of this repository. Do not
+restart old fleets or migrate their data as part of an App/CLI release. Do not publish to an external package registry as a release side effect.
+
+For an explicitly owner-authorized scoped patch, follow the reduced validation
+profile in [the release checklist](docs/release-checklist.md#scoped-patch-releases).
+It may retain unchanged dependencies and baseline evidence for unaffected code;
+new artifact signatures, privacy scans and download readback are never inherited.
+The [upstream gate](docs/release-checklist.md#full-release-upstream-gate) applies
+only to this explicit integrated-product list: Excalidraw and Vditor, including
+their skill files, references and helper scripts. New integrations join this list
+only when the owner names them for inclusion. A package manifest or license
+inventory does not expand this list.
+Complete the upstream checks, upgrades and affected validation before freezing;
+keep adapted skills aligned with the pinned editor. The existing owner-authorized
+scoped-patch exception above remains.
+
+Baoyu Design/PPT and their adapted skills are not a mandatory pre-release
+upstream check or upgrade item. Retain the verified pins unless the owner scopes
+an update or a specific needed fix; a newer upstream version alone does not block
+a release. When changing them, review the bound upstream code fragments, keep
+skill/editor provenance accurate, validate the affected flows and preserve
+ordinary native PPT routing. This exception does not waive the shipped-dependency
+security review, freeze rules or validation for changes actually made. See the
+2026-11-15 owner amendment in the release checklist.
+
+Ordinary dependencies are not an upstream release gate: npm/Gradle/Cargo
+libraries, AndroidX, Firebase, OkHttp, frameworks and build tools are not subject
+to a blanket pre-release upgrade. Maintain them at the beginning of a version
+cycle, in separate commits, outside release preparation. Upgrade only for a
+security advisory affecting released code, a bug fix the product needs, or a
+mandatory platform/store requirement. A newer version alone is not a reason.
+Keep framework-managed dependencies, such as Capacitor's AndroidX and Cordova
+versions, at the framework defaults and update them only with that framework.
+Ask the owner before any major-version upgrade, including integrated products.
+If an integration upgrade requires ordinary dependency changes, explain the
+minimal necessary set and ask the owner before proceeding; do not expand scope.
+
+Before every source freeze, including scoped patches, check security advisories
+for dependencies actually shipped in the installers, including transitive
+libraries and runtimes. This is a check-only review, not permission to upgrade.
+Record the shipped versions, advisory sources, check date and applicability;
+report advisories affecting released code separately for the owner's decision.
+Electron patch versions follow this same rule; an available patch is not an
+automatic pre-release upgrade. See the [security review](docs/release-checklist.md#pre-freeze-security-advisory-review).
+
+After freeze, do not update dependencies or integrations. Only release-blocking
+fixes are allowed; tell the owner about each proposed fix and its impact before
+changing it. If a blocker requires changing a frozen dependency or integration,
+ask the owner to decide first. Dependencies discovered to be outdated after
+freeze go into the next-version backlog with current/new versions and security
+advisory status. Report security concerns separately for the owner's decision;
+do not independently widen the current release.
+
+Validation must match the change. Mobile native dependency changes require
+launching the App on a physical device or emulator/simulator and exercising the
+affected Host connection, push, keyboard-layout and in-app-update flows. Builds,
+Lint and unit tests alone are insufficient. Record genuine non-applicability
+with its reason separately from unavailable validation. If required runtime
+validation cannot be done, do not upgrade, or omit that platform from this
+release; other validated platforms proceed. Never ship an unverified upgrade.
+These dependency, freeze and validation rules also apply to scoped patches.
+
+If policy scope is unclear, ask the owner rather than interpreting it broadly.
+When citing an owner requirement, quote the exact text and name its source file;
+do not substitute "according to your earlier requirements". The verbatim policy
+is in [the checklist](docs/release-checklist.md#owner-policy-text).
+These rules apply prospectively.
+
+Stable App transport rules are host-owned in `src/gateway/agent-instructions.ts`.
+Per-Bot persona/preferences remain user-owned; do not write transport rules or
+turn-scoped paths into resumed project `AGENTS.md` / `CLAUDE.md`.
+See [adapter retirement and retained regression coverage](docs/adapter-retirement-2026-10-21.md).
+
+## Platform-specific visual sizing
+
+iPhone has a different perceived visual size from the established Android and
+desktop interfaces. Equal CSS values do not imply an equally readable or
+balanced result across these platforms. Evaluate iPhone, Android and desktop
+separately against their own accepted appearance; do not use iPhone feedback
+as a reason to resize every platform.
+
+Keep platform-specific adjustments explicitly scoped to the requested platform.
+Preserve the accepted Android and desktop appearance when improving iPhone
+readability, unless the owner also requests changes to those platforms. Check
+shared-token consumers, settings previews and narrow desktop windows as well as
+the main list: they must not inherit an unintended iPhone adjustment. Record
+these principles here, not fixed pixel sizes; current geometry belongs in the
+implementation and its regression coverage.
+
+Preserve explicit saved density choices and the separate chat reading-size
+setting. Keep CSS tokens, actual Avatar/group-collage sizes and the settings
+preview consistent. The platform attribute is set by `client/src/appearance.ts`;
+geometry lives in `client/src/layout-density.css` and `layout-density.ts`.
+Check iPhone, Android and desktop/browser branches with
+`client/e2e/layout-density.spec.ts` when changing these sizes; browser checks do
+not establish physical-device acceptance.
+See [the sizing decision and verification](docs/client/phone-inbox-composer-2026-10-23.md)
+for the implementation history and platform-boundary corrections.
+
+An iPhone window can change size while the App remains active, including across
+the phone/sidebar layout boundary. Do not infer a desktop input device from
+window width or reserve keyboard space using the physical screen height.
+Use the current window and its asymmetric safe areas; preserve the active
+conversation, draft, attachments and pending-send choice through a resize.
+Verify touch controls and native pickers in both compact and expanded iOS
+layouts. Simulator/browser evidence must stay distinct from physical-device
+acceptance. See [adaptive iPhone coverage](docs/client/iphone-duo-2026-10-25.md).
+
+Duo-specific adjustments must preserve ordinary iPhone behavior in both
+portrait and landscape. An iPhone user agent or a wide window alone does not
+identify an expanded display. Scope expanded-only layout and keyboard changes
+to the current unoccluded window geometry, and withdraw them on folding or
+window resizing. Cover ordinary phones, cover displays and expanded windows
+separately in regressions; keep shared iOS changes intentional and explicit.
+
+## Product naming
+
+New shared App/CLI code, prompts, environment variables and workspace artifacts
+must use open-super-agent or neutral names. Put shared implementation outside optional
+transport directories. Keep Lark/Telegram names only for genuine integrations or
+explicitly documented compatibility boundaries; never mass-rewrite persisted
+session/routing identifiers. Read [docs/neutral-naming.md](docs/neutral-naming.md)
+before changing historical names and cover old-state read/new-state write behavior.
+
+The 1.0.0 line is a new product identity: display name, package name, CLI
+command and runtime identifiers changed together.
+
+- Display and artifact names use **open-super-agent**: `open-super-agent.app`,
+  `open-super-agent_<version>_x64-setup.exe`, `open-super-agent-<version>.tgz`.
+  Use `scripts/release-artifact-names.mjs` for the distribution filenames.
+- Package and CLI: npm package `open-super-agent`; the only command is
+  `open-super-agent` (`bin/open-super-agent.mjs`). It uses the same host.
+- Runtime identifiers: bundle id `com.opensuperagent.client`, deep-link scheme
+  `opensuperagent://`, macOS LaunchAgent label `open-super-agent`, Windows
+  `HKCU\...\Run\open-super-agent`, environment prefix `OPEN_SUPER_AGENT_`,
+  keychain services and data directories under the open-super-agent name.
+
+This identity break is deliberate. An install of the previous product is a
+different application: its settings, sessions and credentials are not migrated
+and the updater does not upgrade it in place. Keep the retired names only where
+code reads the retired generation — the legacy migration reader and the retired
+Tauri exporter under `client/src-tauri/legacy/` — and never as a new default.
+Do not add a retired filename as a compatibility shortcut.
+
+## Product version rule
+
+`release-version.json` is the single source of truth. Starting with the next
+open-super-agent line, App and bundled/standalone CLI use the same `MAJOR.MINOR.PATCH`.
+Breaking compatibility increments MAJOR; compatible features increment MINOR;
+fixes increment PATCH. Use `npm run version:bump -- patch|minor|major`, then
+`npm run version:check`; never independently increment platform/package files.
+Platform upload build counters are separate, monotonic, and never reused for
+different bytes. Protocol/schema versions and internal helper-crate versions
+are separate contracts. A version edit is not release authorization.

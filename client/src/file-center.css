@@ -1,0 +1,73 @@
+.file-center-entry{margin:8px 12px;justify-content:flex-start;color:var(--grey)}
+.file-center{width:min(1120px,96vw);height:min(850px,92dvh);background:var(--bg);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;outline:none}
+.file-center-header{padding:22px 24px 16px;display:flex;justify-content:space-between;gap:16px}.file-center-header h2{display:flex;align-items:center;gap:9px;font-size:19px}.file-center-header p{font-size:12px;color:var(--grey);margin-top:8px;line-height:1.6}.file-center-header>.icon-button{align-self:flex-start}
+.file-center-header>div{flex:1;min-width:0}
+.file-center-summary{display:flex;align-items:center;gap:24px;background:var(--surface);padding:16px 24px}.file-center-summary>div{display:flex;flex-direction:column;gap:5px}.file-center-summary small{color:var(--grey);font-size:12px}.file-center-summary strong{font-size:21px;font-variant-numeric:tabular-nums}.file-center-summary>.file-action:first-of-type{margin-left:auto}
+.file-action{border:1px solid var(--border);background:var(--bg);padding:8px 10px;font-size:12px;min-height:36px;flex-shrink:0}.file-center-notices{font-size:11px;padding:9px 24px;color:var(--grey);border-bottom:1px solid var(--border);overflow-wrap:anywhere;max-height:120px;overflow:auto}.file-center-notices p{margin-top:6px}
+.file-center-body{display:flex;min-height:0;flex:1}.file-center-browser{min-width:0;flex:1;display:flex;flex-direction:column;padding:16px;overflow:auto}
+.file-center-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.file-center-filters input{grid-column:1/-1;width:100%;min-height:32px;font-size:13px;line-height:20px;padding:5px 9px}
+.file-center-filters select{width:100%;min-height:32px;font-size:13px;line-height:20px;padding:5px 28px 5px 8px;text-overflow:ellipsis}
+.file-center-results{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 4px}
+.file-filter-count{flex:1;min-width:0;font-size:11px;color:var(--grey);margin:0 2px}
+.file-center-results select{flex:0 1 auto;max-width:55%;min-height:32px;font-size:12px;line-height:20px;padding:5px 28px 5px 8px;border-color:transparent;background-color:transparent;text-overflow:ellipsis}
+/* Android can use compact utility text. Keep the shared 16px focus-zoom floor
+   on iOS; its controls still benefit from the smaller padding and layout. */
+@supports not (-webkit-touch-callout:none){
+  @media(max-width:760px),(hover:none) and (pointer:coarse){
+    .file-center .file-center-filters :is(input,select),
+    .file-center .file-center-results select{font-size:13px}
+  }
+}
+.file-center-list{display:flex;flex-direction:column;gap:4px}.file-unit{width:100%;justify-content:space-between;text-align:left;padding:13px 12px;border:1px solid var(--border);border-radius:8px;gap:12px}.file-unit.selected{border-color:var(--blue);background:var(--selected)}.file-unit>div{display:flex;flex-direction:column;gap:6px;min-width:0}.file-unit>div:first-child{flex:1}.file-unit>div:last-child{text-align:right;align-items:flex-end}.file-unit strong{display:flex;align-items:center;gap:5px;font-size:13px;overflow-wrap:anywhere}.file-unit span,.file-unit small{font-size:11px;color:var(--grey)}.file-unit small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.file-unit b{font-size:13px;font-weight:600;white-space:nowrap}
+.file-safety{display:inline-flex;align-self:flex-start;border-radius:5px;background:var(--surface);color:var(--grey);font-size:11px;padding:3px 7px}.file-safety.important,.file-safety.protected{color:var(--orange)}.file-safety.active{color:var(--green)}.file-center-empty{padding:30px 12px;color:var(--grey);font-size:13px;line-height:1.8}.file-pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:15px;font-size:12px}
+.file-details{width:42%;max-width:455px;min-width:320px;padding:18px 22px;overflow:auto;border-left:1px solid var(--border);background:var(--bg)}.file-details>header{display:flex;align-items:flex-start;flex-direction:column;gap:10px}.file-details h3{font-size:16px;overflow-wrap:anywhere}.file-details h4{margin:20px 0 9px;font-size:13px}.file-details p,.file-details li{font-size:12px;line-height:1.7}.file-details details{font-size:12px;margin-top:18px}.file-details summary{cursor:pointer}.file-details ul{padding-left:18px}
+.file-facts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0;font-size:12px}.file-facts>div{min-width:0}.file-facts dt{color:var(--grey);font-size:11px;margin-bottom:5px}.file-facts dd{margin:0;overflow-wrap:anywhere}.file-location{display:block;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);padding:10px;font-size:11px;border-radius:6px;line-height:1.7}.file-detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.file-details ul.file-types,.file-details ul.file-largest{list-style:none;padding:0;margin:0}.file-types li,.file-largest li{display:flex;justify-content:space-between;gap:14px;border-bottom:1px solid var(--border);padding:7px 0}.file-largest span{overflow-wrap:anywhere;min-width:0}.file-largest b{font-weight:400;white-space:nowrap}.file-details form{border-top:1px solid var(--border);margin-top:20px}.file-details form>p{color:var(--grey)}.file-details form>label{display:flex;flex-direction:column;gap:7px;margin:14px 0;font-size:12px}.file-details form>label.file-important{flex-direction:row;align-items:center;gap:7px}.file-details select,.file-details textarea{width:100%;font-size:12px}.file-details form>small{display:block;text-align:right;color:var(--grey)}.file-details>p{margin-top:12px}
+@media(max-width:700px){.modal-scrim.file-center-scrim{padding:0}.file-center{width:100%;height:100dvh;max-height:100dvh;border-radius:0;border:0;padding-top:var(--app-safe-top);padding-bottom:var(--app-safe-bottom)}.file-center-header{padding:18px 16px 12px}.file-center-summary{gap:16px;flex-wrap:wrap;padding:13px 16px}.file-center-summary strong{font-size:18px}.file-center-summary .file-action{margin-left:0!important}.file-center-notices{padding:8px 16px}.file-center-browser{padding:12px}.file-center.has-selection .file-center-browser{display:none}.file-details{width:100%;min-width:0;max-width:none;border:0;padding:16px}.file-center.has-selection .file-center-summary,.file-center.has-selection .file-center-notices{display:none}.file-center.has-selection .file-center-header p{display:none}.file-unit{padding:14px 10px}.file-action{min-height:40px}}
+/* File Center › 工作区文件 | 附件管理: same segmented look as the sidebar switch. */
+.file-center-tabs{display:flex;gap:2px;margin:0 24px 12px;padding:3px;background:var(--surface-alt,var(--surface));border-radius:var(--radius);align-self:flex-start}
+.file-center-tabs>button{min-height:30px;padding:4px 14px;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-size:13px;white-space:nowrap}
+.file-center-tabs>button[aria-selected=true]{background:var(--raised,var(--bg));color:var(--text);box-shadow:var(--elev-1)}
+.file-center-tabs>button:hover:not(:disabled){color:var(--text)}
+/* Reserve the action area outside the scrollport, including when confirmation
+   expands. A sticky footer inside the list obscures rows and their controls. */
+.attachment-details{display:flex;flex-direction:column;overflow:hidden}
+.attachment-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.attachment-scroll>header{display:flex;align-items:flex-start;flex-direction:column;gap:10px}
+.attachment-scroll>header h3{font-size:16px;margin:4px 0 0;overflow-wrap:anywhere}.attachment-scroll>header p{font-size:12px;color:var(--grey);margin:0}
+.attachment-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:16px 0 8px}
+.attachment-toolbar select{min-height:32px;font-size:12px;padding:5px 28px 5px 8px;max-width:60%}
+.attachment-browser .file-filter-count{flex:none;margin:0 2px 8px}
+/* Destructive actions read like 删除 Bot: red outline, red ink. */
+.attachment-details button.danger{min-height:34px;font-size:12px;gap:6px;color:var(--red);border:1px solid color-mix(in srgb,var(--red) 55%,var(--border));background:transparent}
+.attachment-details button.danger:hover:not(:disabled){background:var(--red-soft,color-mix(in srgb,var(--red) 8%,var(--bg)))}
+.attachment-details button.danger:disabled{opacity:.45}
+.attachment-list{list-style:none;padding:0;margin:0}
+.attachment-list>li{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);padding:8px 0}
+.attachment-list>li>label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
+.attachment-list>li>label>input{flex:none}
+.attachment-list>li>label>span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.attachment-list strong{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attachment-list small{font-size:11px;color:var(--grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attachment-list>li[data-pending]>label{cursor:default;opacity:.7}
+.attachment-item-actions{display:flex;align-items:center;gap:4px;flex:none}
+.attachment-selection{flex:none;display:flex;justify-content:flex-end;padding:12px 0 2px;border-top:1px solid var(--border);background:var(--bg)}
+.attachment-confirm{flex:none;max-height:60%;overflow:auto;margin-top:12px;padding:12px 14px;border:1px solid var(--red);border-radius:10px;background:var(--bg)}
+.attachment-confirm p{margin:0 0 6px;font-size:13px}.attachment-confirm p.muted{font-size:12px;color:var(--grey)}
+.attachment-confirm>div{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.image-load-state.is-deleted{color:var(--grey)}
+@media(max-width:700px){.file-center-tabs{margin:0 16px 10px}.file-center.has-selection .file-center-tabs{display:none}}
+/* Wide, short windows retain the refresh action and visible status while leaving
+   room for attachment rows and the separate deletion/confirmation scrollport. */
+@media(min-width:701px) and (max-height:560px){
+  .file-center:has(.attachment-details) .file-center-header{padding:10px 16px 8px}
+  .file-center:has(.attachment-details) .file-center-header p{display:none}
+  .file-center:has(.attachment-details) .file-center-tabs{margin-bottom:8px}
+  .file-center:has(.attachment-details) .file-center-summary{padding:8px 16px;gap:16px}
+  .file-center:has(.attachment-details) .file-center-summary>div{flex-direction:row;align-items:center;gap:8px}
+  .file-center:has(.attachment-details) .file-center-summary strong{font-size:16px}
+  .file-center:has(.attachment-details) .file-center-notices{max-height:48px;padding:4px 16px;flex-shrink:0}
+  .file-center:has(.attachment-details) .file-center-notices:empty{display:none}
+  .file-center:has(.attachment-details) .file-details{padding:12px 16px}
+}

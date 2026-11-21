@@ -1,0 +1,72 @@
+import { buildHostEnvironment } from "../src/host-cli/environment.js";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, expect, it, vi } from "vitest";
+import * as service from "../src/host-cli/service-manager.js";
+import { inspectHost } from "../src/host-cli/doctor.js";
+import { HubEngineSettings } from "../src/hub/engine-settings.js";
+import { engineSettingsFile } from "../src/runtime/host-engine-settings.js";
+const roots: string[] = [];
+afterEach(async () => { vi.restoreAllMocks(); await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
+it("reports service ownership mismatch structurally, and only names divergent environment variables", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "doctor-environment-")); roots.push(root);
+  vi.spyOn(service, "managedServiceStatus").mockRejectedValue(new Error("host_service_owner_mismatch"));
+  vi.spyOn(service, "managedServiceEnvironmentDifferences").mockResolvedValue(["CODEX_HOME", "HTTPS_PROXY"]);
+  const result = await inspectHost(root, { PATH: "/usr/bin", CODEX_HOME: "/private/custom", HTTPS_PROXY: "http://name:never-print-password@proxy.invalid" });
+  expect(result.manager.error).toBe("host_service_owner_mismatch");
+  expect(result.serviceEnvironmentDifferences).toEqual(["CODEX_HOME", "HTTPS_PROXY"]);
+  expect(JSON.stringify(result)).not.toContain("never-print-password");
+  expect(JSON.stringify(result)).not.toContain("/private/custom");
+});
+it("does not include raw environment/manifest errors that could contain proxy credentials", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "doctor-environment-")); roots.push(root);
+  vi.spyOn(service, "managedServiceStatus").mockRejectedValue(new Error("host_service_owner_mismatch: password=never-print-me"));
+  vi.spyOn(service, "managedServiceEnvironmentDifferences").mockRejectedValue(new Error("proxy=never-print-me"));
+  const result = await inspectHost(root, { PATH: "/usr/bin" });
+  expect(result.manager.error).toBe("host_service_status_unavailable");
+  expect(result.serviceEnvironmentCheck).toBe("host_service_environment_unavailable");
+  expect(JSON.stringify(result)).not.toContain("never-print-me");
+});
+
+it.each([{ CODEX_HOME: "relative-private-location" }, { HTTPS_PROXY: "private\npassword" }])("keeps doctor usable for invalid service environment %j", async invalid => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "doctor-environment-")); roots.push(root);
+  const result = await inspectHost(root, { PATH: "/usr/bin", ...invalid });
+  expect(result.environmentCheck).toEqual({ error: "host_environment_invalid", variables: [Object.keys(invalid)[0]] });
+  expect(result.engines.map(row => row.engine).sort()).toEqual(["antigravity", "claude", "codex", "deepseek", "kimi", "pi"]);
+  expect(JSON.stringify(result)).not.toContain(Object.values(invalid)[0]);
+});
+
+it("explains settings repair without falling back or changing a damaged file", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "doctor-settings-")); roots.push(root);
+  await writeFile(path.join(root, "engine-settings.json"), "broken", { mode: 0o600 });
+  const result = await inspectHost(root, { PATH: "/usr/bin" });
+  expect(result.engines).toEqual([]);
+  expect(result.environmentCheck).toMatchObject({ error: "engine_settings_unavailable", hint: expect.stringContaining("engine-settings.json") });
+});
+
+it("keeps a manual engine path and damaged settings visible when the terminal environment is invalid", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "doctor-fallback-")); roots.push(root);
+  const home = path.join(root, "home"); await mkdir(home);
+  const executable = path.join(root, process.platform === "win32" ? "manual-codex.cmd" : "manual-codex"); await writeFile(executable, "a fixture, never executed"); await chmod(executable, 0o700);
+  await new HubEngineSettings(root, () => ({ HOME: home, PATH: "/usr/bin" })).update({ engine: "codex", path: executable, requestId: "set", revision: "default" }, apply => apply());
+  const invalid = { HOME: home, PATH: "/usr/bin", CODEX_HOME: "relative-private-location" };
+  const report = await inspectHost(root, invalid);
+  expect(report.environmentCheck).toEqual({ error: "host_environment_invalid", variables: ["CODEX_HOME"] });
+  // The fallback inspects presence only; it must not report a different program than the Host would start.
+  expect(report.engines.find(item => item.engine === "codex")).toMatchObject({ installed: true, executable });
+  await writeFile(engineSettingsFile(root), "broken", { mode: 0o600 });
+  const damaged = await inspectHost(root, invalid);
+  expect(damaged.engines).toEqual([]);
+  expect(damaged.environmentCheck).toEqual({ error: "host_environment_invalid", variables: ["CODEX_HOME"], hint: expect.stringContaining("engine-settings.json") });
+  expect(JSON.stringify(damaged)).not.toContain("relative-private-location");
+});
+
+it.each(["darwin", "win32"] as const)("preserves Pi native directory forms in the %s Host environment", platform => {
+  const home = platform === "win32" ? "C:\\Synthetic\\Account" : "/synthetic/account";
+  const environment = buildHostEnvironment({ platform, home, env: {
+    PATH: "", PI_CODING_AGENT_DIR: "~/custom-pi", PI_CODING_AGENT_SESSION_DIR: "relative/sessions",
+  } });
+  expect(environment).toMatchObject({ PI_CODING_AGENT_DIR: "~/custom-pi", PI_CODING_AGENT_SESSION_DIR: "relative/sessions" });
+  expect(() => buildHostEnvironment({ platform, home, env: { PI_CODING_AGENT_SESSION_DIR: "bad\nvalue" } })).toThrow(/invalid_environment/);
+});

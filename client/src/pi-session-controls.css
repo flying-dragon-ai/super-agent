@@ -1,0 +1,16 @@
+.pi-session-controls { min-width: 0; max-width: 100%; }
+.pi-session-controls > button { max-width: min(100%, 24rem); }
+.pi-session-panel { display: grid; gap: 14px; min-width: 0; }
+.pi-session-panel label { display: grid; gap: 6px; min-width: 0; }
+.pi-session-panel input, .pi-session-panel select { width: 100%; min-width: 0; box-sizing: border-box; }
+.pi-session-panel > button { justify-self: start; min-height: 42px; }
+.pi-session-panel p { margin: 0; overflow-wrap: anywhere; }
+.pi-extension-output { min-width: 0; border-top: 1px solid var(--border); padding-top: 14px; display: grid; gap: 8px; }
+.pi-extension-output h3 { margin: 0; font-size: 14px; }
+.pi-extension-output pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+@media (max-width: 600px) { .pi-session-panel input, .pi-session-panel select { font-size: 16px; min-height: 44px; } }
+
+/* Native extensions can register long names; keep their phone menu inside the composer. */
+.command-menu.pi-command-menu button { gap: 12px; }
+.command-menu.pi-command-menu strong { flex: 0 0 45%; min-width: 0; max-width: 45%; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.command-menu.pi-command-menu span { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }

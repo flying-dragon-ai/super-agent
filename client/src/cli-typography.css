@@ -1,0 +1,36 @@
+/* Keep Sarasa for Chinese. CLI uses a wider
+   Latin face; both families are bundled for desktop/mobile offline reading. */
+@font-face{font-family:"Sarasa Term SC";src:url("./assets/fonts/sarasa-term-sc/SarasaTermSC-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Sarasa Term SC";src:url("./assets/fonts/sarasa-term-sc/SarasaTermSC-SemiBold.woff2") format("woff2");font-weight:600 900;font-style:normal;font-display:swap}
+
+@font-face{font-family:"JetBrains Mono";src:url("./assets/fonts/jetbrains-mono/JetBrainsMono-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"JetBrains Mono";src:url("./assets/fonts/jetbrains-mono/JetBrainsMono-SemiBold.woff2") format("woff2");font-weight:600 900;font-style:normal;font-display:swap}
+
+:root[data-palette=cli],.palette-preview[data-palette=cli],.palette-preview[data-palette=cli] .xp-pane{
+  --font-sans:"JetBrains Mono","Sarasa Term SC",ui-monospace,"SF Mono",Consolas,monospace;
+  --font-mono:var(--font-sans);
+  font-variant-ligatures:none;
+}
+/* A terminal uses weight/color for emphasis, not larger headings or smaller
+   code. Tables share the compact desktop reading scale; passive previews and
+   phones keep their inherited size. Colours are the tokens defined once in
+   expressive-themes.css; this sheet only says which text takes which. */
+:root[data-palette=cli] :is(.message .message-blocks>.markdown,.message .card-text>.markdown,.markdown-table-reader){font-size:1rem;line-height:1.7}
+:root[data-palette=cli] :is(.message .markdown,.markdown-table-reader) :is(table,code,pre){font-family:var(--font-mono);font-size:1em;font-variant-ligatures:none}
+:root[data-palette=cli] :is(.message .markdown,.markdown-table-reader) table{font-size:var(--markdown-table-font-size,1em)}
+:root[data-palette=cli] .message .markdown :is(h1,h2,h3,h4,h5,h6){font-size:1em;font-weight:600;line-height:1.7;color:var(--cli-bright)}
+:root[data-palette=cli] .message .rich-card>.card-header{font-size:1rem;font-weight:600}
+/* Bold is bright, as in a console; a bold link keeps its link colour. */
+:root[data-palette=cli] :is(.message .markdown,.markdown-table-reader) :is(strong,th){font-weight:600}
+:root[data-palette=cli] :is(.message .markdown,.markdown-table-reader) :is(strong,th):not(a *){color:var(--cli-bright)}
+:root[data-palette=cli] .message.bot .message-meta strong{color:var(--cli-agent)}
+:root[data-palette=cli] .message .markdown :not(pre)>code{color:var(--cli-inline-code);background:transparent;padding:0;border:0}
+:root[data-palette=cli] .message .markdown a{color:var(--accent);text-decoration:underline;text-underline-offset:.18em}
+:root[data-palette=cli] .message .markdown blockquote{color:var(--muted)}
+:root[data-palette=cli] .message .markdown :is(.hljs-type,.hljs-built_in){color:var(--cli-type)}
+:root[data-palette=cli] .message .markdown :is(.hljs-number,.hljs-literal){color:var(--cli-number)}
+:root[data-palette=cli] .message .markdown :is(.hljs-comment,.hljs-meta){color:var(--muted);font-style:normal}
+/* Diff lines are coloured text, as `git diff` prints them. */
+:root[data-palette=cli] .message .markdown .hljs-addition{color:var(--green)}
+:root[data-palette=cli] .message .markdown .hljs-deletion{color:var(--red)}
+:root[data-palette=cli] .message.user .markdown :is(blockquote,.hljs-comment,.hljs-meta){color:var(--self-message-muted)}
